@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mon robot</title>
+<style>
+:root{--fond:#11181c;--carte:#1a2429;--bord:#26323a;--texte:#ecf0f1;--doux:#8a9499;--tq:#33d1b8;--bl:#7aa5ff;--rg:#e5484d;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fond:#11181c}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--fond);color:var(--texte);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body{max-width:480px;margin:0 auto;min-height:100vh}
+.ecran{display:none;padding:24px 16px 100px}
+.ecran.actif{display:block}
+h1{font-size:28px;margin:8px 0 16px}
+.ligne{display:flex;justify-content:space-between;align-items:center}
+.carte{background:var(--carte);border-radius:16px;padding:14px 16px;margin-bottom:12px}
+.pt{color:var(--doux);font-size:13px}
+.gros{font-size:22px;font-weight:700}
+.badge{background:#12372f;color:var(--tq);border-radius:20px;padding:6px 12px;font-size:13px}
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grille3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+button{font:inherit;color:var(--texte);cursor:pointer}
+.b{background:var(--carte);border:0;border-radius:16px;padding:22px 6px}
+.b:active{background:var(--bord)}
+.urgence{width:100%;background:var(--rg);border:0;border-radius:16px;padding:22px;font-weight:700;font-size:17px;margin-top:8px}
+.seg{display:flex;background:var(--carte);border-radius:16px;padding:4px;margin-bottom:14px}
+.seg button{flex:1;background:none;border:0;padding:14px 0;border-radius:12px;color:var(--doux)}
+.seg button.on{background:var(--tq);color:#06231e;font-weight:700}
+.video{background:#050a0b;border:1px solid var(--bord);border-radius:20px;height:190px;display:flex;align-items:center;justify-content:center;color:var(--doux);position:relative;margin-bottom:16px}
+.live{position:absolute;top:10px;left:10px;background:var(--rg);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:12px}
+.lat{position:absolute;top:12px;right:14px;font-size:12px;color:var(--texte)}
+.joys{display:flex;justify-content:space-around;margin-bottom:8px}
+.joy{text-align:center;color:var(--doux);font-size:13px}
+.base{width:132px;height:132px;border-radius:50%;background:var(--carte);border:2px solid var(--bord);position:relative;margin:0 auto 8px;touch-action:none}
+.stick{width:64px;height:64px;border-radius:50%;position:absolute;left:34px;top:34px}
+.stick.m{background:var(--tq)}.stick.r{background:var(--bl)}
+h2{font-size:16px;margin:18px 0 10px}
+.mission{border:1px solid var(--tq);border-radius:20px;padding:16px;margin-bottom:16px}
+.barre{height:8px;background:var(--bord);border-radius:8px;margin:10px 0 14px;overflow:hidden}
+.barre i{display:block;height:100%;width:60%;background:var(--tq)}
+.lancer{background:var(--tq);color:#06231e;border:0;border-radius:12px;padding:14px 20px;font-weight:700}
+.creer{width:100%;background:none;border:1px dashed var(--doux);border-radius:16px;padding:18px;margin-bottom:12px}
+.vocal{width:100%;background:var(--bl);color:#0b1a3a;border:0;border-radius:20px;padding:20px;font-weight:700;font-size:17px}
+.reg{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--bord)}
+.reg:last-child{border:0}
+.badge.off{background:#2a3338;color:var(--doux)}
+input[type=range]{width:55%;accent-color:var(--tq)}
+nav{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:auto;display:flex;background:var(--fond);border-top:1px solid var(--bord);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;padding:20px 0;background:none;border:0;color:var(--doux)}
+nav button.actif{color:var(--tq);font-weight:700}
+#msg{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--carte);border:1px solid var(--tq);padding:10px 16px;border-radius:12px;font-size:14px;display:none;z-index:9}
+</style>
+</head>
+<body>
+<div id="msg"></div>
+
+<section id="accueil" class="ecran actif">
+  <div class="ligne"><div><div class="pt">iut douala GEII</div><div class="gros">AGIBOOT</div></div><span class="badge off" id="statut">Déconnecté</span></div>
+  <div class="carte" style="margin-top:16px"><div class="pt">État</div><div class="gros" id="etat">Debout · en veille</div><div class="pt">Prêt à recevoir une commande</div></div>
+  <div class="grille">
+    <div class="carte"><div class="pt">Batterie</div><div class="gros">[00] %</div></div>
+    <div class="carte"><div class="pt">Moteurs</div><div class="gros">[00] °C</div></div>
+  </div>
+  <div class="carte"><div class="pt">Liaison</div>
+    <div class="ligne" style="margin:8px 0"><b>Wi-Fi</b><span class="badge off" id="l-wifi">Non connecté</span></div>
+    <div class="ligne" style="margin:8px 0"><b>Bluetooth</b><span class="badge off" id="l-bluetooth">Non connecté</span></div>
+    <div class="ligne"><b>Radio</b><span class="badge off" id="l-radio">Non connecté</span></div></div>
+  <h2>Actions rapides</h2>
+  <div class="grille3">
+    <button class="b" data-cmd="se_lever" data-etat="Debout · en veille">Se lever</button>
+    <button class="b" data-cmd="s_asseoir" data-etat="Assis · en veille">S’asseoir</button>
+    <button class="b" data-cmd="marcher" data-etat="En marche">Marcher</button>
+    <button class="b" data-cmd="saluer">Saluer</button>
+    <button class="b" data-cmd="suivre" data-etat="Mode suivi">Me suivre</button>
+  </div>
+  <button class="urgence" data-cmd="stop" data-etat="Arrêt d’urgence">ARRÊT D’URGENCE</button>
+</section>
+
+<section id="pilotage" class="ecran">
+  <div class="ligne"><h1>Pilotage</h1><b style="color:var(--tq);font-size:14px">Mode manuel</b></div>
+  <div class="seg" id="vitesse"><button class="on">Lent</button><button>Normal</button><button>Rapide</button></div>
+  <div class="video"><span class="live">EN DIRECT</span><span class="lat" id="lat">Hors ligne</span>Retour vidéo de la caméra</div>
+  <div class="joys">
+    <div class="joy"><div class="base" id="j1"><div class="stick m"></div></div>Déplacement</div>
+    <div class="joy"><div class="base" id="j2"><div class="stick r"></div></div>Rotation / tête</div>
+  </div>
+  <h2>Gestes</h2>
+  <div class="grille3">
+    <button class="b" data-cmd="saluer">Saluer</button>
+    <button class="b" data-cmd="main">Main</button>
+    <button class="b" data-cmd="saisir">Saisir</button>
+  </div>
+  <button class="urgence" data-cmd="stop" data-etat="Arrêt d’urgence">ARRÊT D’URGENCE</button>
+</section>
+
+<section id="missions" class="ecran">
+  <h1>Missions</h1>
+  <div class="mission"><div class="pt" style="color:var(--tq)">En cours</div><div class="gros">[Nom de la mission]</div>
+    <div class="barre"><i></i></div>
+    <div class="grille"><button class="b" style="padding:14px" data-cmd="pause">Pause</button><button class="b" style="padding:14px" data-cmd="annuler">Annuler</button></div></div>
+  <h2>Mes missions</h2>
+  <div class="carte ligne"><span>[Mission 1]</span><button class="lancer" data-cmd="mission_1">Lancer</button></div>
+  <div class="carte ligne"><span>[Mission 2]</span><button class="lancer" data-cmd="mission_2">Lancer</button></div>
+  <button class="creer" data-cmd="creer">+ Créer une mission</button>
+  <button class="vocal" id="vocal">Commande vocale</button>
+</section>
+
+<section id="reglages" class="ecran">
+  <h1>Réglages</h1>
+  <div class="carte"><div class="gros" style="font-size:17px;margin-bottom:10px">Mode de connexion</div>
+    <div class="seg" id="modes"><button data-mode="wifi" class="on">Wi-Fi</button><button data-mode="bluetooth">Bluetooth</button><button data-mode="radio">Radio</button></div>
+    <input id="adr" placeholder="ws://192.168.1.50:81" style="width:100%;padding:14px;border-radius:12px;border:1px solid var(--bord);background:var(--fond);color:var(--texte);font:inherit;margin-bottom:10px">
+    <div class="pt" id="aide" style="margin-bottom:12px"></div>
+    <button class="lancer" style="width:100%" id="conn">Se connecter</button></div>
+  <div class="carte">
+    <div class="reg"><span>Vitesse max</span><input type="range" min="10" max="100" value="60"></div>
+    
+    <div class="reg"><span>Langue</span><span class="pt">Français</span></div>
+  </div>
+</section>
+
+<nav>
+  <button data-ecran="accueil" class="actif">Accueil</button>
+  <button data-ecran="pilotage">Pilotage</button>
+  <button data-ecran="missions">Missions</button>
+  <button data-ecran="reglages">Réglages</button>
+</nav>
+
+<script>
+// Navigation
+const nav=document.querySelectorAll("nav button"),ecr=document.querySelectorAll(".ecran");
+nav.forEach(b=>b.onclick=()=>{
+  ecr.forEach(e=>e.classList.remove("actif"));nav.forEach(x=>x.classList.remove("actif"));
+  document.getElementById(b.dataset.ecran).classList.add("actif");b.classList.add("actif");
+});
+// Envoi de commandes (à remplacer par Bluetooth / WebSocket)
+let vitesse="lent";
+let mode="wifi",ws=null,bleChar=null;
+const etat={wifi:false,bluetooth:false,radio:false};
+const enc=new TextEncoder();
+const noms={wifi:"Wi-Fi",bluetooth:"Bluetooth",radio:"Radio"};
+function maj(){
+  for(const k in etat){const e=document.getElementById("l-"+k);e.textContent=etat[k]?"Connecté":"Non connecté";e.className="badge"+(etat[k]?"":" off");}
+  const ok=etat[mode],s=document.getElementById("statut");
+  s.textContent=ok?"Connecté":"Déconnecté";s.className="badge"+(ok?"":" off");
+  document.getElementById("lat").textContent=noms[mode]+(ok?" · connecté":" · hors ligne");
+}
+function envoyer(c){
+  const t=JSON.stringify(c);console.log(t);
+  try{
+    if(mode==="bluetooth"){if(bleChar)bleChar.writeValueWithoutResponse(enc.encode(t+"\n"));}
+    else if(ws&&ws.readyState===1)ws.send(t);
+  }catch(e){}
+}
+async function connecter(){
+  if(mode==="bluetooth"){
+    if(!navigator.bluetooth){toast("Bluetooth non supporté ici");return;}
+    try{
+      const d=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[0xFFE0]});
+      const srv=await(await d.gatt.connect()).getPrimaryService(0xFFE0);
+      bleChar=await srv.getCharacteristic(0xFFE1);
+      d.addEventListener("gattserverdisconnected",()=>{etat.bluetooth=false;bleChar=null;maj();});
+      etat.bluetooth=true;maj();toast("Bluetooth connecté");
+    }catch(e){toast("Connexion impossible");}
+    return;
+  }
+  const url=document.getElementById("adr").value.trim();
+  if(!url){toast("Saisis l’adresse");return;}
+  try{
+    if(ws)ws.close();
+    const m=mode;ws=new WebSocket(url);
+    ws.onopen=()=>{etat[m]=true;maj();toast(noms[m]+" connecté");};
+    ws.onclose=ws.onerror=()=>{etat[m]=false;maj();};
+  }catch(e){toast("Adresse invalide");}
+}
+const aides={wifi:"Adresse WebSocket du robot sur ton réseau Wi-Fi.",bluetooth:"Un appareil Bluetooth LE te sera proposé (Chrome Android).",radio:"La radio passe par une passerelle (module radio relié au Wi-Fi). Saisis son adresse."};
+function choisir(m){
+  mode=m;
+  document.querySelectorAll("#modes button").forEach(b=>b.classList.toggle("on",b.dataset.mode===m));
+  document.getElementById("adr").style.display=m==="bluetooth"?"none":"block";
+  document.getElementById("aide").textContent=aides[m];
+  maj();
+}
+document.querySelectorAll("#modes button").forEach(b=>b.onclick=()=>choisir(b.dataset.mode));
+document.getElementById("conn").onclick=connecter;
+choisir("wifi");
+function toast(t){const m=document.getElementById("msg");m.textContent=t;m.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display="none",1400);}
+document.querySelectorAll("[data-cmd]").forEach(b=>b.addEventListener("click",()=>{
+  envoyer({cmd:b.dataset.cmd});toast("Commande : "+b.textContent.trim());
+  if(b.dataset.etat)document.getElementById("etat").textContent=b.dataset.etat;
+}));
+// Vitesse
+document.querySelectorAll("#vitesse button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#vitesse button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");vitesse=b.textContent.toLowerCase();
+});
+// Joysticks
+function joystick(id,nom){
+  const base=document.getElementById(id),st=base.firstElementChild,R=34;let actif=false;
+  function bouge(e){
+    const r=base.getBoundingClientRect();
+    let x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;
+    const d=Math.hypot(x,y);if(d>R){x*=R/d;y*=R/d;}
+    st.style.transform=`translate(${x}px,${y}px)`;
+    envoyer({joystick:nom,x:+(x/R).toFixed(2),y:+(-y/R).toFixed(2),vitesse});
+  }
+  base.addEventListener("pointerdown",e=>{actif=true;base.setPointerCapture(e.pointerId);bouge(e);});
+  base.addEventListener("pointermove",e=>{if(actif)bouge(e);});
+  const fin=()=>{actif=false;st.style.transform="";envoyer({joystick:nom,x:0,y:0});};
+  base.addEventListener("pointerup",fin);base.addEventListener("pointercancel",fin);
+}
+joystick("j1","deplacement");joystick("j2","rotation");
+// Commande vocale
+document.getElementById("vocal").onclick=()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast("Voix non supportée ici");return;}
+  const r=new SR();r.lang="fr-FR";r.onresult=e=>{const t=e.results[0][0].transcript;envoyer({voix:t});toast("« "+t+" »");};
+  r.start();toast("Je t’écoute…");
+};
+</script>
+</body>
+</html>
